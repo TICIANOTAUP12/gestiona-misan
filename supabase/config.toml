@@ -1,0 +1,25 @@
+# Gestiona Cobros — Supabase local config
+# Docs: https://supabase.com/docs/guides/cli/config
+
+project_id = "qhdxtwargzpjljytqlvm"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+enable_signup = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = false
