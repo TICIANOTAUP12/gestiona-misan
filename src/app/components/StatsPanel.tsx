@@ -30,6 +30,7 @@ interface StatsPanelProps {
   cotizacionUSD?: number;
   aliasCobranza?: string;
   alias2Cobranza?: string;
+  refreshTrigger?: number;
 }
 
 export function StatsPanel({
@@ -38,6 +39,7 @@ export function StatsPanel({
   cotizacionUSD = 1200,
   aliasCobranza = '',
   alias2Cobranza = '',
+  refreshTrigger = 0,
 }: StatsPanelProps) {
   const [pagos, setPagos] = useState<PagoRegistrado[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -50,7 +52,7 @@ export function StatsPanel({
     if (open) {
       cargarPagos();
     }
-  }, [open]);
+  }, [open, refreshTrigger]);
 
   async function cargarPagos() {
     setCargando(true);
@@ -101,7 +103,7 @@ export function StatsPanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg w-full overflow-y-auto p-0">
+      <SheetContent className="sm:max-w-lg w-full overflow-y-auto p-0" data-testid="stats-panel">
         <div className="sticky top-0 bg-white z-10 border-b px-4 md:px-6 py-4">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 text-lg">
@@ -248,7 +250,7 @@ export function StatsPanel({
             ) : (
               <div className="space-y-2">
                 {pagos.map((pago) => (
-                  <div key={pago.id} className="border rounded-lg p-3 space-y-1.5">
+                  <div key={pago.id} className="border rounded-lg p-3 space-y-1.5" data-testid="stats-pago-item">
                     {/* Alias recibidor */}
                     {pago.alias ? (
                       <div className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium w-fit ${
@@ -295,6 +297,7 @@ export function StatsPanel({
                           className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
                           onClick={() => handleEliminarPago(pago.id)}
                           disabled={borrandoId === pago.id}
+                          data-testid="stats-btn-eliminar-pago"
                         >
                           <Trash2 className={`w-3.5 h-3.5 ${borrandoId === pago.id ? 'animate-pulse' : ''}`} />
                         </Button>

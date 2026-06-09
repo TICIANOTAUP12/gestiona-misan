@@ -63,6 +63,7 @@ export default function Login() {
                 required
                 autoComplete="username"
                 disabled={isLoading}
+                data-testid="login-username"
               />
             </div>
             <div className="space-y-2">
@@ -77,9 +78,10 @@ export default function Login() {
                 required
                 autoComplete="current-password"
                 disabled={isLoading}
+                data-testid="login-password"
               />
             </div>
-            <Button type="submit" className="w-full h-12 text-base mt-6" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 text-base mt-6" disabled={isLoading} data-testid="login-submit">
               {isLoading ? 'Ingresando...' : 'Iniciar Sesión'}
             </Button>
           </form>

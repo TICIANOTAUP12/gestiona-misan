@@ -1,0 +1,13 @@
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMmUtdXNlci1pZCIsImVtYWlsIjoiZ2VzdGlvbmEubWlzYW5AY29tIiwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJleHAiOjk5OTk5OTk5OTl9.fake",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "expires_at": 9999999999,
+  "refresh_token": "fake-refresh-token",
+  "user": {
+    "id": "e2e-user-id",
+    "email": "gestiona@misan.com",
+    "role": "authenticated",
+    "aud": "authenticated"
+  }
+}

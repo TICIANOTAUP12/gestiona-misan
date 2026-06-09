@@ -63,6 +63,7 @@ export default function Dashboard() {
   const [configOpen, setConfigOpen] = useState(false);
   const [clienteDialogOpen, setClienteDialogOpen] = useState(false);
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [ordenAZ, setOrdenAZ] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,9 +74,9 @@ export default function Dashboard() {
   }, []);
 
   function aplicarConfig(configDB: api.Configuracion) {
-    const cotiz = configDB.cotizacionUSD || CONFIG_INICIAL.cotizacionUSD;
-    const valorARS = configDB.valorSistema || CONFIG_INICIAL.valorSistema;
-    const usd = configDB.valorSistemaUSD || +(valorARS / cotiz).toFixed(4);
+    const cotiz = configDB.cotizacionUSD ?? CONFIG_INICIAL.cotizacionUSD;
+    const valorARS = configDB.valorSistema ?? CONFIG_INICIAL.valorSistema;
+    const usd = configDB.valorSistemaUSD ?? +(valorARS / cotiz).toFixed(4);
     const configCompleta: api.Configuracion = {
       ...configDB,
       valorSistema: valorARS,
@@ -98,8 +99,8 @@ export default function Dashboard() {
 
       if (cambios && actualizados.length > 0) {
         const dia = new Date().getDate();
-        const msg = dia <= 5 ? 'Estados actualizados: inicio de mes, todos al día'
-          : dia <= 10 ? 'Estados actualizados: clientes con saldo marcados como pendientes'
+        const msg = dia < 4 ? 'Estados actualizados: inicio de mes, todos al día'
+          : dia < 9 ? 'Estados actualizados: clientes con saldo marcados como pendientes'
           : 'Estados actualizados: clientes con saldo marcados como vencidos';
         toast.info(msg);
         await api.guardarClientesBatch(actualizados);
@@ -130,7 +131,7 @@ export default function Dashboard() {
   }, [clientes, cargando]);
 
   // Aplica el ciclo mensual de estados según el día del mes:
-  // día 1-5 → al-dia | día 6-10 → pendiente | día 11+ → vencido
+  // día 1-3 → al-dia | día 4-8 → pendiente | día 9+ → vencido
   // Solo afecta clientes con saldo > 0. Saldo = 0 siempre queda al-dia.
   function aplicarCicloMensual(lista: Cliente[]): { clientes: Cliente[]; cambios: boolean } {
     const dia = new Date().getDate();
@@ -139,8 +140,8 @@ export default function Dashboard() {
     const actualizados = lista.map(cliente => {
       const estadoEsperado: Cliente['estado'] =
         cliente.saldo <= 0 ? 'al-dia' :
-        dia <= 5 ? 'al-dia' :
-        dia <= 10 ? 'pendiente' :
+        dia < 4 ? 'al-dia' :
+        dia < 9 ? 'pendiente' :
         'vencido';
 
       if (estadoEsperado !== cliente.estado) {
@@ -160,13 +161,31 @@ export default function Dashboard() {
 
   const handleCotizacionGuardar = async () => {
     const nueva = parseFloat(cotizacionInput);
-    if (!nueva || nueva <= 0) { setEditandoCotizacion(false); return; }
+    if (!nueva || nueva <= 0) {
+      setEditandoCotizacion(false);
+      return;
+    }
+
     const nuevoARS = valorSistemaUSD * nueva;
+    const configActualizada: api.Configuracion = {
+      ...config,
+      valorSistema: nuevoARS,
+      valorSistemaUSD,
+      cotizacionUSD: nueva,
+    };
+
+    const ok = await api.guardarConfig(configActualizada);
+    if (!ok) {
+      toast.error('Error al guardar cotización en la base de datos');
+      setEditandoCotizacion(false);
+      return;
+    }
+
     setCotizacionUSD(nueva);
     setValorSistema(nuevoARS);
+    setConfig(configActualizada);
     setEditandoCotizacion(false);
 
-    // Actualizar montos de clientes
     setClientes(prev => prev.map(c => {
       const montoAuto = c.cantidadSistemas * valorSistema;
       if (c.montoCuota === montoAuto || Math.abs(c.montoCuota - montoAuto) < 1) {
@@ -175,23 +194,10 @@ export default function Dashboard() {
       return c;
     }));
 
-    try {
-      const configActualizada: api.Configuracion = {
-        ...config,
-        valorSistema: nuevoARS,
-        valorSistemaUSD,
-        cotizacionUSD: nueva,
-      };
-      await api.guardarConfig(configActualizada);
-      setConfig(configActualizada);
-      toast.success(`Cotización actualizada: $${nueva.toLocaleString('es-AR')} ARS/USD`);
-    } catch (e) {
-      console.error('Error al guardar cotización:', e);
-      toast.error('Error al guardar cotización en la base de datos');
-    }
+    toast.success(`Cotización actualizada: $${nueva.toLocaleString('es-AR')} ARS/USD`);
   };
 
-  const handleValorSistemaChange = async (nuevoARS: number, nuevoUSD: number, nuevaCotiz: number) => {
+  const handleValorSistemaChange = (nuevoARS: number, nuevoUSD: number, nuevaCotiz: number) => {
     setValorSistema(nuevoARS);
     setValorSistemaUSD(nuevoUSD);
     setCotizacionUSD(nuevaCotiz);
@@ -205,20 +211,6 @@ export default function Dashboard() {
         return cliente;
       })
     );
-
-    try {
-      const configActualizada: api.Configuracion = {
-        ...config,
-        valorSistema: nuevoARS,
-        valorSistemaUSD: nuevoUSD,
-        cotizacionUSD: nuevaCotiz,
-      };
-      await api.guardarConfig(configActualizada);
-      setConfig(configActualizada);
-    } catch (error) {
-      console.error('Error al guardar configuración:', error);
-      toast.error('Error al guardar configuración en la base de datos');
-    }
   };
 
   const handleConfigGuardada = (configActualizada: api.Configuracion) => {
@@ -317,12 +309,12 @@ export default function Dashboard() {
     }
   };
 
-  const valorSistemaUSDDisplay = cotizacionUSD > 0 ? (valorSistema / cotizacionUSD).toFixed(2) : '0';
+  const valorSistemaUSDDisplay = valorSistemaUSD > 0 ? valorSistemaUSD.toFixed(2) : '0';
   const saldoTotalUSD = cotizacionUSD > 0 ? (stats.totalSaldo / cotizacionUSD).toFixed(2) : '0';
 
   const diaHoy = new Date().getDate();
-  const faseCiclo = diaHoy <= 5 ? { label: 'Al día', color: 'text-green-700 bg-green-50 border-green-200', dot: 'bg-green-500' }
-    : diaHoy <= 10 ? { label: 'Pendientes', color: 'text-amber-700 bg-amber-50 border-amber-200', dot: 'bg-amber-500' }
+  const faseCiclo = diaHoy < 4 ? { label: 'Al día', color: 'text-green-700 bg-green-50 border-green-200', dot: 'bg-green-500' }
+    : diaHoy < 9 ? { label: 'Pendientes', color: 'text-amber-700 bg-amber-50 border-amber-200', dot: 'bg-amber-500' }
     : { label: 'Vencidos', color: 'text-red-700 bg-red-50 border-red-200', dot: 'bg-red-500' };
 
   return (
@@ -377,7 +369,7 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setStatsPanelOpen(true)} className="h-9">
+              <Button variant="outline" size="sm" onClick={() => setStatsPanelOpen(true)} className="h-9" data-testid="stats-btn-abrir">
                 <BarChart2 className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Estadísticas</span>
               </Button>
@@ -552,6 +544,7 @@ export default function Dashboard() {
                         className="w-full h-12"
                         onClick={() => { setClienteSeleccionado(cliente); setSheetOpen(true); }}
                         disabled={false}
+                        data-testid="cobro-btn-gestionar"
                       >
                         <MessageCircle className="w-5 h-5 mr-2" />
                         Gestionar Cobro
@@ -625,6 +618,7 @@ export default function Dashboard() {
                               size="sm"
                               onClick={() => { setClienteSeleccionado(cliente); setSheetOpen(true); }}
                               disabled={false}
+                              data-testid="cobro-btn-gestionar"
                             >
                               <MessageCircle className="w-4 h-4 mr-2" />
                               Gestionar Cobro
@@ -652,7 +646,7 @@ export default function Dashboard() {
         mensajeVencido={config.mensajeVencido}
         mensajePendiente={config.mensajePendiente}
         onActualizarCliente={handleActualizarCliente}
-        onPagoRegistrado={() => {}}
+        onPagoRegistrado={() => setStatsRefreshKey((k) => k + 1)}
       />
 
       <ConfigDialog
@@ -682,6 +676,7 @@ export default function Dashboard() {
         cotizacionUSD={cotizacionUSD}
         aliasCobranza={config.aliasCobranza}
         alias2Cobranza={config.alias2Cobranza}
+        refreshTrigger={statsRefreshKey}
       />
     </div>
   );

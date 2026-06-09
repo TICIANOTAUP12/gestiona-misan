@@ -1,0 +1,10 @@
+{
+  "id": 1,
+  "valor_sistema": 12500,
+  "valor_sistema_usd": 10.4167,
+  "cotizacion_usd": 1200,
+  "alias_cobranza": "GESTINA.COBROS",
+  "alias2_cobranza": "GESTINA.COBROS2",
+  "mensaje_vencido": "Hola {nombre}, tu saldo es {saldo}",
+  "mensaje_pendiente": "Hola {nombre}, recordatorio de pago {saldo}"
+}

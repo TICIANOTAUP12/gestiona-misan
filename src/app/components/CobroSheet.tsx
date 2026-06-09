@@ -163,9 +163,6 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
       estado: nuevoEstado,
     };
 
-    onActualizarCliente(clienteActualizado);
-
-    // Registrar en historial de pagos
     const pago = {
       id: `${Date.now()}-${cliente.id}`,
       clienteId: cliente.id,
@@ -176,23 +173,36 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
       fecha: new Date().toISOString(),
       alias: aliasSeleccionado,
       tipo,
-      esCuotaMensual: cliente.saldo === 0, // Nuevo campo para identificar si era pago de cuota
+      esCuotaMensual: cliente.saldo === 0,
     };
 
     try {
-      await api.registrarPago(pago);
-      onPagoRegistrado?.();
-    } catch (e) {
-      console.error('Error al registrar historial de pago:', e);
-    }
-
-    if (isMountedRef.current) {
-      if (tipo === 'total') {
-        toast.success(`Pago total registrado. Cliente al día.`);
-      } else {
-        toast.success(`Pago de $${montoFinal.toLocaleString('es-AR')} registrado.`);
+      const okCliente = await api.guardarCliente(clienteActualizado);
+      if (!okCliente) {
+        if (isMountedRef.current) toast.error('No se pudo guardar el cliente');
+        return;
       }
-      onOpenChange(false);
+
+      const okPago = await api.registrarPago(pago);
+      if (!okPago) {
+        if (isMountedRef.current) toast.error('No se pudo registrar el pago');
+        return;
+      }
+
+      onActualizarCliente(clienteActualizado);
+      onPagoRegistrado?.();
+
+      if (isMountedRef.current) {
+        if (tipo === 'total') {
+          toast.success('Pago total registrado. Cliente al día.');
+        } else {
+          toast.success(`Pago de $${montoFinal.toLocaleString('es-AR')} registrado.`);
+        }
+        onOpenChange(false);
+      }
+    } catch (e) {
+      console.error('Error al registrar pago:', e);
+      if (isMountedRef.current) toast.error('No se pudo registrar el pago');
     }
   };
 
@@ -234,7 +244,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg w-full overflow-y-auto p-0">
+      <SheetContent className="sm:max-w-lg w-full overflow-y-auto p-0" data-testid="cobro-sheet">
         <div className="sticky top-0 bg-white z-10 border-b px-4 md:px-6 py-4">
           <SheetHeader>
             <SheetTitle className="text-lg md:text-xl">Gestionar Cobro</SheetTitle>
@@ -254,7 +264,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-semibold text-base md:text-sm">{cliente.nombre}</p>
-                  <Badge {...estadoBadge[cliente.estado]} className="text-xs">
+                  <Badge variant={estadoBadge[cliente.estado].variant} className="text-xs">
                     {estadoBadge[cliente.estado].label}
                   </Badge>
                 </div>
@@ -298,7 +308,10 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
                   <CreditCard className="w-4 h-4" />
                   {cliente.saldo > 0 ? 'Saldo Acumulado' : 'Cuota del Mes'}
                 </div>
-                <p className={`text-xl md:text-lg font-semibold ${cliente.saldo > 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                <p
+                  data-testid="cobro-saldo-pendiente"
+                  className={`text-xl md:text-lg font-semibold ${cliente.saldo > 0 ? 'text-red-600' : 'text-amber-600'}`}
+                >
                   ${cliente.saldo > 0 ? cliente.saldo.toLocaleString('es-AR') : cliente.montoCuota.toLocaleString('es-AR')}
                 </p>
                 {cliente.saldo > 0 ? (
@@ -356,20 +369,21 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
             <div className="space-y-2">
               <Label htmlFor="estado">Estado del Cliente</Label>
               <div className="flex gap-2">
-                <Select value={estadoLocal} onValueChange={(value: any) => setEstadoLocal(value)}>
-                  <SelectTrigger id="estado" className="flex-1">
+                <Select value={estadoLocal} onValueChange={(value: Cliente['estado']) => setEstadoLocal(value)}>
+                  <SelectTrigger id="estado" className="flex-1" data-testid="cobro-select-estado">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="al-dia">Al día</SelectItem>
-                    <SelectItem value="pendiente">Pendiente</SelectItem>
-                    <SelectItem value="vencido">Vencido</SelectItem>
+                    <SelectItem value="al-dia" data-testid="cobro-estado-al-dia">Al día</SelectItem>
+                    <SelectItem value="pendiente" data-testid="cobro-estado-pendiente">Pendiente</SelectItem>
+                    <SelectItem value="vencido" data-testid="cobro-estado-vencido">Vencido</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
                   variant="outline"
                   onClick={handleActualizarEstado}
                   disabled={estadoLocal === cliente.estado}
+                  data-testid="cobro-btn-actualizar-estado"
                 >
                   Actualizar
                 </Button>
@@ -389,6 +403,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
                       onChange={(e) => setMontoPago(parseFloat(e.target.value) || 0)}
                       placeholder="Monto cobrado"
                       className="text-base"
+                      data-testid="cobro-input-monto"
                     />
                   </div>
                   <div className="space-y-1">
@@ -403,6 +418,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
                       onChange={(e) => setDescuento(parseFloat(e.target.value) || 0)}
                       placeholder="0"
                       className="text-base"
+                      data-testid="cobro-input-descuento"
                     />
                   </div>
                 </div>
@@ -456,6 +472,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
                     onClick={() => handleRegistrarPago('parcial')}
                     disabled={montoPago <= 0}
                     className="w-full"
+                    data-testid="cobro-btn-pago-parcial"
                   >
                     <Banknote className="w-4 h-4 mr-2" />
                     Pago Parcial
@@ -464,6 +481,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
                     variant="default"
                     onClick={() => handleRegistrarPago('total')}
                     className="w-full bg-green-600 hover:bg-green-700"
+                    data-testid="cobro-btn-pago-total"
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                     Pago Total
@@ -504,6 +522,7 @@ Por favor, confirmame cuando realices el pago. ¡Gracias!`;
               className="w-full h-14 md:h-12 text-base"
               size="lg"
               disabled={!mensaje.trim()}
+              data-testid="cobro-btn-whatsapp"
             >
               <MessageCircle className="w-5 h-5 mr-2" />
               Enviar por WhatsApp

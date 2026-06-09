@@ -6,7 +6,10 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "setup:admin": "node scripts/create-admin.mjs"
+    "setup:admin": "node scripts/create-admin.mjs",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "e2e": "start-server-and-test dev http://localhost:5173 cy:run"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -54,10 +57,10 @@
     "next-themes": "0.4.6",
     "papaparse": "^5.5.3",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
+    "react-dom": "18.3.1",
     "react-hook-form": "7.55.0",
     "react-popper": "2.3.0",
     "react-resizable-panels": "2.1.7",
@@ -73,7 +76,10 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "cypress": "^14.5.4",
+    "start-server-and-test": "^2.0.13",
     "tailwindcss": "4.1.12",
+    "typescript": "^5.8.3",
     "vite": "6.3.5"
   },
   "pnpm": {

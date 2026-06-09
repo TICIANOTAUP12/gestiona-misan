@@ -1,0 +1,41 @@
+[
+  {
+    "id": "e2e-1",
+    "nombre": "Cliente Vencido E2E",
+    "telefono": "5491112345678",
+    "cantidad_sistemas": 2,
+    "monto_cuota": 25000,
+    "saldo": 25000,
+    "metodo_pago": "",
+    "estado": "vencido",
+    "mensaje_vencimiento": null,
+    "mensaje_pago_pendiente": null,
+    "fecha_vencimiento": null
+  },
+  {
+    "id": "e2e-2",
+    "nombre": "Cliente Pendiente E2E",
+    "telefono": "5491187654321",
+    "cantidad_sistemas": 1,
+    "monto_cuota": 12500,
+    "saldo": 10000,
+    "metodo_pago": "",
+    "estado": "pendiente",
+    "mensaje_vencimiento": null,
+    "mensaje_pago_pendiente": null,
+    "fecha_vencimiento": null
+  },
+  {
+    "id": "e2e-3",
+    "nombre": "Cliente Al Dia E2E",
+    "telefono": "5491199999999",
+    "cantidad_sistemas": 1,
+    "monto_cuota": 12500,
+    "saldo": 0,
+    "metodo_pago": "",
+    "estado": "al-dia",
+    "mensaje_vencimiento": null,
+    "mensaje_pago_pendiente": null,
+    "fecha_vencimiento": null
+  }
+]

@@ -57,11 +57,12 @@ export function ConfigDialog({
   }, [open, config, valorSistemaUSD, cotizacionUSD]);
 
   const handleGuardar = async () => {
-    const nuevoARS = localValorUSD * localCotizacion;
-    if (nuevoARS !== valorSistema || localValorUSD !== valorSistemaUSD || localCotizacion !== cotizacionUSD) {
-      onValorSistemaChange(nuevoARS, localValorUSD, localCotizacion);
+    if (localValorUSD <= 0 || localCotizacion <= 0) {
+      toast.error('El valor en USD y la cotización deben ser mayores a 0');
+      return;
     }
 
+    const nuevoARS = localValorUSD * localCotizacion;
     const configActualizada: api.Configuracion = {
       valorSistema: nuevoARS,
       valorSistemaUSD: localValorUSD,
@@ -76,6 +77,14 @@ export function ConfigDialog({
     if (!ok) {
       toast.error('Error al guardar en la base de datos');
       return;
+    }
+
+    if (
+      nuevoARS !== valorSistema ||
+      localValorUSD !== valorSistemaUSD ||
+      localCotizacion !== cotizacionUSD
+    ) {
+      onValorSistemaChange(nuevoARS, localValorUSD, localCotizacion);
     }
 
     onConfigGuardada(configActualizada);

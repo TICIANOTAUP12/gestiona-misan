@@ -59,10 +59,21 @@ export function ClienteDialog({
       const montoAuto = cliente.cantidadSistemas * valorSistema;
       if (Math.abs(cliente.montoCuota - montoAuto) < 1) {
         setModoMonto('automatico');
+        setMontoUSD(cotizacionUSD > 0 ? +(cliente.montoCuota / cotizacionUSD).toFixed(2) : 0);
+      } else if (cotizacionUSD > 0) {
+        const usdDerivado = cliente.montoCuota / cotizacionUSD;
+        const arsDesdeUsd = Math.round(usdDerivado * cotizacionUSD);
+        if (Math.abs(cliente.montoCuota - arsDesdeUsd) < 1) {
+          setModoMonto('fijo-usd');
+          setMontoUSD(+(usdDerivado.toFixed(2)));
+        } else {
+          setModoMonto('fijo-ars');
+          setMontoUSD(+(usdDerivado.toFixed(2)));
+        }
       } else {
         setModoMonto('fijo-ars');
+        setMontoUSD(0);
       }
-      setMontoUSD(cotizacionUSD > 0 ? +(cliente.montoCuota / cotizacionUSD).toFixed(2) : 0);
     } else {
       setFormData({
         nombre: '',
