@@ -71,13 +71,4 @@ Copiá `.env.example` a `.env` si querés sobreescribir las credenciales por def
 npm run build
 ```
 
-El output queda en `dist/`.
-
-## Deploy en Vercel
-
-1. Importá el repo desde GitHub en [vercel.com](https://vercel.com)
-2. Agregá las variables de entorno:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-3. Build command: `npm run build`
-4. Output directory: `dist`
+El output queda en `dist/`. Serví esa carpeta con cualquier hosting estático que prefieras.
